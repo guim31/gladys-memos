@@ -1,0 +1,26 @@
+{
+  "request": "POST /api/v1/memos",
+  "status": 200,
+  "body": {
+    "name": "memos/KW63fuAyZ3hBq9MGD2VfA4",
+    "state": "NORMAL",
+    "creator": "users/admin",
+    "createTime": "2026-10-23T18:03:55Z",
+    "updateTime": "2026-10-23T18:03:55Z",
+    "content": "Porte du garage restée ouverte 10 min #maison #journal/garage",
+    "visibility": "PRIVATE",
+    "tags": ["maison", "journal", "journal/garage"],
+    "pinned": false,
+    "attachments": [],
+    "relations": [],
+    "reactions": [],
+    "property": {
+      "hasLink": false,
+      "hasTaskList": false,
+      "hasCode": false,
+      "hasIncompleteTasks": false,
+      "title": ""
+    },
+    "snippet": "Porte du garage restée ouverte 10 min #maison #journal/garage"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "request": "PATCH /api/v1/memos/doesnotexist?updateMask=pinned",
+  "status": 404,
+  "body": {
+    "code": 5,
+    "message": "memo not found",
+    "details": []
+  }
+}

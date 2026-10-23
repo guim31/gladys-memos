@@ -1,177 +1,776 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Memos",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Memos in Gladys: write memos from scenes, show the latest ones, react to a new memo.",
+    "fr": "Memos dans Gladys : écrire des mémos depuis les scènes, voir les derniers, réagir à un nouveau.",
+    "de": "Memos in Gladys: Notizen aus Szenen schreiben, die neuesten zeigen, auf neue reagieren.",
+    "es": "Memos en Gladys: escribir memos desde escenas, ver los últimos y reaccionar a uno nuevo."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
-  "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
+  "docker_image": "ghcr.io/guim31/gladys-memos:1.0.0",
+  "gladys_version": ">=5.2.0",
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-memos/main/cover.png",
+  "categories": ["services"],
   "transports": ["local", "cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Connect Memos",
+        "fr": "Connecter Memos",
+        "de": "Memos verbinden",
+        "es": "Conectar Memos"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Enter the address of your Memos server (port 5230 by default) and an access token: in Memos, open Settings → Access Tokens and create one. The integration reads your counters and newest memos, and writes the memos your scenes send it. Tested with Memos 0.31.",
+        "fr": "Saisissez l'adresse de votre serveur Memos (port 5230 par défaut) et un jeton d'accès : dans Memos, ouvrez Paramètres → Jetons d'accès et créez-en un. L'intégration lit vos compteurs et vos derniers mémos, et écrit les mémos que vos scènes lui envoient. Testée avec Memos 0.31.",
+        "de": "Gib die Adresse deines Memos-Servers (standardmäßig Port 5230) und ein Zugangstoken ein: Öffne in Memos Einstellungen → Zugangstoken und erstelle eins. Die Integration liest deine Zähler und neuesten Notizen und schreibt die Notizen, die deine Szenen ihr schicken. Getestet mit Memos 0.31.",
+        "es": "Introduzca la dirección de su servidor Memos (puerto 5230 por defecto) y un token de acceso: en Memos, abra Configuración → Tokens de acceso y cree uno. La integración lee sus contadores y sus últimos memos, y escribe los memos que le envían sus escenas. Probada con Memos 0.31."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://usememos.com/docs",
+          "label": {
+            "en": "Memos documentation",
+            "fr": "Documentation de Memos",
+            "de": "Memos-Dokumentation",
+            "es": "Documentación de Memos"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "url",
+      "type": "string",
+      "label": {
+        "en": "Memos address",
+        "fr": "Adresse de Memos",
+        "de": "Memos-Adresse",
+        "es": "Dirección de Memos"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
+      "placeholder": {
+        "en": "e.g. 192.168.1.50:5230",
+        "fr": "ex. 192.168.1.50:5230",
+        "de": "z. B. 192.168.1.50:5230",
+        "es": "p. ej. 192.168.1.50:5230"
+      },
       "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "default": ""
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "access_token",
+      "type": "secret",
+      "label": {
+        "en": "Access token",
+        "fr": "Jeton d'accès",
+        "de": "Zugangstoken",
+        "es": "Token de acceso"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "description": {
+        "en": "Memos → Settings → Access Tokens → Create. The memos are written as this user.",
+        "fr": "Memos → Paramètres → Jetons d'accès → Créer. Les mémos sont écrits au nom de cet utilisateur.",
+        "de": "Memos → Einstellungen → Zugangstoken → Erstellen. Die Notizen werden als dieser Benutzer geschrieben.",
+        "es": "Memos → Configuración → Tokens de acceso → Crear. Los memos se escriben en nombre de este usuario."
+      },
+      "required": true
     },
     {
-      "key": "unit",
+      "key": "refresh_minutes",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Read Memos every",
+        "fr": "Lire Memos toutes les",
+        "de": "Memos lesen alle",
+        "es": "Leer Memos cada"
+      },
+      "description": {
+        "en": "New memos are announced to scenes at the next read.",
+        "fr": "Les nouveaux mémos sont signalés aux scènes à la lecture suivante.",
+        "de": "Neue Notizen werden den Szenen beim nächsten Lesen gemeldet.",
+        "es": "Los nuevos memos se comunican a las escenas en la siguiente lectura."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "5",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "1",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        },
+        {
+          "value": "5",
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
+        },
+        {
+          "value": "15",
+          "label": {
+            "en": "15 minutes",
+            "fr": "15 minutes",
+            "de": "15 Minuten",
+            "es": "15 minutos"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "30 minutes",
+            "fr": "30 minutes",
+            "de": "30 Minuten",
+            "es": "30 minutos"
+          }
+        },
+        {
+          "value": "60",
+          "label": {
+            "en": "60 minutes",
+            "fr": "60 minutes",
+            "de": "60 Minuten",
+            "es": "60 minutos"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of names and messages",
+        "fr": "Langue des noms et des messages",
+        "de": "Sprache der Namen und Meldungen",
+        "es": "Idioma de los nombres y mensajes"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Feature names are set when a device is added to Gladys.",
+        "fr": "Les noms des fonctionnalités sont fixés à l'ajout de l'appareil dans Gladys.",
+        "de": "Die Namen der Funktionen werden beim Hinzufügen des Geräts zu Gladys festgelegt.",
+        "es": "Los nombres de las funciones se fijan al añadir el dispositivo a Gladys."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
       "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "memo_created",
+      "label": {
+        "en": "New memo",
+        "fr": "Nouveau mémo",
+        "de": "Neue Notiz",
+        "es": "Nuevo memo"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A memo is written in Memos (by you, or shared by another user). The memos of this integration are not announced.",
+        "fr": "Un mémo est écrit dans Memos (par vous, ou partagé par un autre utilisateur). Les mémos de cette intégration ne sont pas signalés.",
+        "de": "Eine Notiz wird in Memos geschrieben (von dir oder von einem anderen Benutzer geteilt). Die Notizen dieser Integration werden nicht gemeldet.",
+        "es": "Se escribe un memo en Memos (por usted, o compartido por otro usuario). Los memos de esta integración no se comunican."
       },
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "key": "author",
+          "type": "string",
+          "required": false,
+          "label": {
+            "en": "Author (empty: anyone)",
+            "fr": "Auteur (vide : tout le monde)",
+            "de": "Autor (leer: alle)",
+            "es": "Autor (vacío: cualquiera)"
+          },
+          "description": {
+            "en": "Memos username, e.g. camille.",
+            "fr": "Nom d'utilisateur Memos, par exemple camille.",
+            "de": "Memos-Benutzername, z. B. camille.",
+            "es": "Nombre de usuario de Memos, por ejemplo camille."
+          }
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "key": "visibility",
+          "type": "select",
+          "required": false,
+          "label": {
+            "en": "Visibility (empty: all)",
+            "fr": "Visibilité (vide : toutes)",
+            "de": "Sichtbarkeit (leer: alle)",
+            "es": "Visibilidad (vacío: todas)"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "private",
+              "label": {
+                "en": "Private (default)",
+                "fr": "Privé (par défaut)",
+                "de": "Privat (Standard)",
+                "es": "Privado (predeterminado)"
+              }
+            },
+            {
+              "value": "protected",
+              "label": {
+                "en": "Protected: signed-in users",
+                "fr": "Protégé : utilisateurs connectés",
+                "de": "Geschützt: angemeldete Benutzer",
+                "es": "Protegido: usuarios registrados"
+              }
+            },
+            {
+              "value": "public",
+              "label": {
+                "en": "Public",
+                "fr": "Public",
+                "de": "Öffentlich",
+                "es": "Público"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "content",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Text of the memo",
+            "fr": "Texte du mémo",
+            "de": "Text der Notiz",
+            "es": "Texto del memo"
+          }
+        },
+        {
+          "key": "title",
+          "type": "string",
+          "label": {
+            "en": "First line",
+            "fr": "Première ligne",
+            "de": "Erste Zeile",
+            "es": "Primera línea"
+          }
+        },
+        {
+          "key": "tags",
+          "type": "string",
+          "label": {
+            "en": "Tags",
+            "fr": "Étiquettes",
+            "de": "Tags",
+            "es": "Etiquetas"
+          }
+        },
+        {
+          "key": "author",
+          "type": "string",
+          "label": {
+            "en": "Author (username)",
+            "fr": "Auteur (nom d'utilisateur)",
+            "de": "Autor (Benutzername)",
+            "es": "Autor (nombre de usuario)"
+          }
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "label": {
+            "en": "Visibility (private, protected, public)",
+            "fr": "Visibilité (private, protected, public)",
+            "de": "Sichtbarkeit (private, protected, public)",
+            "es": "Visibilidad (private, protected, public)"
+          }
+        },
+        {
+          "key": "visibility_name",
+          "type": "string",
+          "label": {
+            "en": "Visibility, in words",
+            "fr": "Visibilité, en toutes lettres",
+            "de": "Sichtbarkeit, in Worten",
+            "es": "Visibilidad, en palabras"
+          }
+        },
+        {
+          "key": "link",
+          "type": "string",
+          "label": {
+            "en": "Link to the memo",
+            "fr": "Lien vers le mémo",
+            "de": "Link zur Notiz",
+            "es": "Enlace al memo"
+          }
+        }
+      ]
+    },
+    {
+      "key": "memo_tagged",
+      "label": {
+        "en": "New memo with a tag",
+        "fr": "Nouveau mémo avec une étiquette",
+        "de": "Neue Notiz mit einem Tag",
+        "es": "Nuevo memo con una etiqueta"
+      },
+      "description": {
+        "en": "A new memo carries the tag (or one of its sub-tags: home also matches #home/garage).",
+        "fr": "Un nouveau mémo porte l'étiquette (ou une de ses sous-étiquettes : maison vaut aussi pour #maison/garage).",
+        "de": "Eine neue Notiz trägt den Tag (oder einen Unter-Tag: haus gilt auch für #haus/garage).",
+        "es": "Un nuevo memo lleva la etiqueta (o una subetiqueta: casa vale también para #casa/garaje)."
+      },
+      "fields": [
+        {
+          "key": "tag",
+          "type": "string",
+          "required": true,
+          "label": {
+            "en": "Tag, without #",
+            "fr": "Étiquette, sans #",
+            "de": "Tag, ohne #",
+            "es": "Etiqueta, sin #"
+          },
+          "placeholder": {
+            "en": "e.g. home",
+            "fr": "ex. maison",
+            "de": "z. B. haus",
+            "es": "p. ej. casa"
+          },
+          "description": {
+            "en": "Exactly as written in Memos (upper and lower case count).",
+            "fr": "Exactement comme dans Memos (majuscules comprises).",
+            "de": "Genau wie in Memos (Groß- und Kleinschreibung zählt).",
+            "es": "Exactamente como en Memos (las mayúsculas cuentan)."
+          }
+        },
+        {
+          "key": "author",
+          "type": "string",
+          "required": false,
+          "label": {
+            "en": "Author (empty: anyone)",
+            "fr": "Auteur (vide : tout le monde)",
+            "de": "Autor (leer: alle)",
+            "es": "Autor (vacío: cualquiera)"
+          },
+          "description": {
+            "en": "Memos username, e.g. camille.",
+            "fr": "Nom d'utilisateur Memos, par exemple camille.",
+            "de": "Memos-Benutzername, z. B. camille.",
+            "es": "Nombre de usuario de Memos, por ejemplo camille."
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "content",
+          "type": "string",
+          "label": {
+            "en": "Text of the memo",
+            "fr": "Texte du mémo",
+            "de": "Text der Notiz",
+            "es": "Texto del memo"
+          }
+        },
+        {
+          "key": "title",
+          "type": "string",
+          "label": {
+            "en": "First line",
+            "fr": "Première ligne",
+            "de": "Erste Zeile",
+            "es": "Primera línea"
+          }
+        },
+        {
+          "key": "tags",
+          "type": "string",
+          "label": {
+            "en": "Tags",
+            "fr": "Étiquettes",
+            "de": "Tags",
+            "es": "Etiquetas"
+          }
+        },
+        {
+          "key": "tag",
+          "type": "string",
+          "label": {
+            "en": "Matched tag",
+            "fr": "Étiquette trouvée",
+            "de": "Gefundener Tag",
+            "es": "Etiqueta encontrada"
+          }
+        },
+        {
+          "key": "author",
+          "type": "string",
+          "label": {
+            "en": "Author (username)",
+            "fr": "Auteur (nom d'utilisateur)",
+            "de": "Autor (Benutzername)",
+            "es": "Autor (nombre de usuario)"
+          }
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "label": {
+            "en": "Visibility (private, protected, public)",
+            "fr": "Visibilité (private, protected, public)",
+            "de": "Sichtbarkeit (private, protected, public)",
+            "es": "Visibilidad (private, protected, public)"
+          }
+        },
+        {
+          "key": "visibility_name",
+          "type": "string",
+          "label": {
+            "en": "Visibility, in words",
+            "fr": "Visibilité, en toutes lettres",
+            "de": "Sichtbarkeit, in Worten",
+            "es": "Visibilidad, en palabras"
+          }
+        },
+        {
+          "key": "link",
+          "type": "string",
+          "label": {
+            "en": "Link to the memo",
+            "fr": "Lien vers le mémo",
+            "de": "Link zur Notiz",
+            "es": "Enlace al memo"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "create_memo",
+      "label": {
+        "en": "Write a memo in Memos",
+        "fr": "Écrire un mémo dans Memos",
+        "de": "Notiz in Memos schreiben",
+        "es": "Escribir un memo en Memos"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Writes a memo (Markdown), private unless chosen otherwise: a house journal, a reminder.",
+        "fr": "Écrit un mémo (Markdown), privé sauf choix contraire : journal de la maison, rappel.",
+        "de": "Schreibt eine Notiz (Markdown), privat, außer du wählst anders: Haus-Tagebuch, Erinnerung.",
+        "es": "Escribe un memo (Markdown), privado salvo que elija otra cosa: diario de la casa, recordatorio."
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
-          "key": "device",
+          "key": "content",
+          "type": "string",
+          "required": true,
+          "label": {
+            "en": "Text of the memo",
+            "fr": "Texte du mémo",
+            "de": "Text der Notiz",
+            "es": "Texto del memo"
+          },
+          "placeholder": {
+            "en": "e.g. Garage door left open",
+            "fr": "ex. Porte du garage restée ouverte",
+            "de": "z. B. Garagentor offen gelassen",
+            "es": "p. ej. Puerta del garaje abierta"
+          }
+        },
+        {
+          "key": "tags",
+          "type": "string",
+          "required": false,
+          "label": {
+            "en": "Tags (optional)",
+            "fr": "Étiquettes (facultatif)",
+            "de": "Tags (optional)",
+            "es": "Etiquetas (opcional)"
+          },
+          "placeholder": {
+            "en": "e.g. home, journal",
+            "fr": "ex. maison, journal",
+            "de": "z. B. haus, tagebuch",
+            "es": "p. ej. casa, diario"
+          },
+          "description": {
+            "en": "Separated by commas, without #: added at the end of the memo.",
+            "fr": "Séparées par des virgules, sans # : ajoutées à la fin du mémo.",
+            "de": "Durch Kommas getrennt, ohne #: am Ende der Notiz angefügt.",
+            "es": "Separadas por comas, sin #: se añaden al final del memo."
+          }
+        },
+        {
+          "key": "visibility",
           "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "required": false,
+          "default": "private",
+          "label": {
+            "en": "Visibility",
+            "fr": "Visibilité",
+            "de": "Sichtbarkeit",
+            "es": "Visibilidad"
+          },
+          "options": [
+            {
+              "value": "private",
+              "label": {
+                "en": "Private (default)",
+                "fr": "Privé (par défaut)",
+                "de": "Privat (Standard)",
+                "es": "Privado (predeterminado)"
+              }
+            },
+            {
+              "value": "protected",
+              "label": {
+                "en": "Protected: signed-in users",
+                "fr": "Protégé : utilisateurs connectés",
+                "de": "Geschützt: angemeldete Benutzer",
+                "es": "Protegido: usuarios registrados"
+              }
+            },
+            {
+              "value": "public",
+              "label": {
+                "en": "Public",
+                "fr": "Public",
+                "de": "Öffentlich",
+                "es": "Público"
+              }
+            }
+          ]
+        },
+        {
+          "key": "pinned",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "label": {
+            "en": "Pin the memo",
+            "fr": "Épingler le mémo",
+            "de": "Notiz anpinnen",
+            "es": "Fijar el memo"
+          }
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
+          "key": "memo_id",
+          "type": "string",
+          "label": {
+            "en": "Memo id",
+            "fr": "Identifiant du mémo",
+            "de": "Notiz-ID",
+            "es": "Id del memo"
+          }
+        },
+        {
+          "key": "title",
+          "type": "string",
+          "label": {
+            "en": "First line",
+            "fr": "Première ligne",
+            "de": "Erste Zeile",
+            "es": "Primera línea"
+          }
+        },
+        {
+          "key": "link",
+          "type": "string",
+          "label": {
+            "en": "Link to the memo",
+            "fr": "Lien vers le mémo",
+            "de": "Link zur Notiz",
+            "es": "Enlace al memo"
+          }
+        }
+      ]
+    },
+    {
+      "key": "pin_latest",
+      "label": {
+        "en": "Pin the latest memo of a tag",
+        "fr": "Épingler le dernier mémo d'une étiquette",
+        "de": "Neueste Notiz eines Tags anpinnen",
+        "es": "Fijar el último memo de una etiqueta"
+      },
+      "description": {
+        "en": "Pins (or unpins) the newest memo carrying the tag, e.g. this week's shopping list.",
+        "fr": "Épingle (ou désépingle) le mémo le plus récent qui porte l'étiquette, par exemple la liste de courses de la semaine.",
+        "de": "Pinnt die neueste Notiz mit dem Tag an (oder löst sie), z. B. die Einkaufsliste der Woche.",
+        "es": "Fija (o desfija) el memo más reciente con la etiqueta, por ejemplo la lista de la compra de la semana."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "tag",
+          "type": "string",
+          "required": true,
+          "label": {
+            "en": "Tag, without #",
+            "fr": "Étiquette, sans #",
+            "de": "Tag, ohne #",
+            "es": "Etiqueta, sin #"
+          },
+          "placeholder": {
+            "en": "e.g. shopping",
+            "fr": "ex. courses",
+            "de": "z. B. einkauf",
+            "es": "p. ej. compra"
+          }
+        },
+        {
+          "key": "unpin",
           "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "required": false,
+          "default": false,
+          "label": {
+            "en": "Unpin instead",
+            "fr": "Désépingler plutôt",
+            "de": "Stattdessen lösen",
+            "es": "Desfijar en su lugar"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "memo_id",
+          "type": "string",
+          "label": {
+            "en": "Memo id",
+            "fr": "Identifiant du mémo",
+            "de": "Notiz-ID",
+            "es": "Id del memo"
+          }
+        },
+        {
+          "key": "title",
+          "type": "string",
+          "label": {
+            "en": "First line",
+            "fr": "Première ligne",
+            "de": "Erste Zeile",
+            "es": "Primera línea"
+          }
+        },
+        {
+          "key": "link",
+          "type": "string",
+          "label": {
+            "en": "Link to the memo",
+            "fr": "Lien vers le mémo",
+            "de": "Link zur Notiz",
+            "es": "Enlace al memo"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "memos",
+      "label": {
+        "en": "Memos",
+        "fr": "Memos",
+        "de": "Memos",
+        "es": "Memos"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Counters, the newest memos (of a tag if you want) and a button to write one.",
+        "fr": "Compteurs, derniers mémos (d'une étiquette si vous voulez) et un bouton pour en écrire un.",
+        "de": "Zähler, die neuesten Notizen (eines Tags, wenn du willst) und ein Knopf zum Schreiben.",
+        "es": "Contadores, los últimos memos (de una etiqueta si quiere) y un botón para escribir uno."
+      },
+      "icon": "file-text",
+      "action_timeout_seconds": 30,
+      "settings": [
+        {
+          "key": "tag",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "label": {
+            "en": "Tag (empty: all memos)",
+            "fr": "Étiquette (vide : tous les mémos)",
+            "de": "Tag (leer: alle Notizen)",
+            "es": "Etiqueta (vacío: todos los memos)"
+          },
+          "description": {
+            "en": "Without #. A memo written from the widget gets this tag.",
+            "fr": "Sans #. Un mémo écrit depuis le widget reçoit cette étiquette.",
+            "de": "Ohne #. Eine im Widget geschriebene Notiz bekommt diesen Tag.",
+            "es": "Sin #. Un memo escrito desde el widget recibe esta etiqueta."
+          }
+        },
+        {
+          "key": "pinned_only",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "label": {
+            "en": "Pinned memos only",
+            "fr": "Mémos épinglés seulement",
+            "de": "Nur angepinnte Notizen",
+            "es": "Solo memos fijados"
+          }
+        }
+      ]
     }
   ]
 }

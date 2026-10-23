@@ -1,0 +1,9 @@
+{
+  "request": "GET /api/v1/nope",
+  "status": 404,
+  "body": {
+    "code": 5,
+    "message": "Not Found",
+    "details": []
+  }
+}

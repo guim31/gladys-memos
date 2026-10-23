@@ -1,0 +1,36 @@
+{
+  "request": "GET /api/v1/users/admin:getStats",
+  "status": 200,
+  "body": {
+    "name": "users/admin/stats",
+    "memoTypeStats": {
+      "linkCount": 0,
+      "codeCount": 0,
+      "todoCount": 1,
+      "undoCount": 1
+    },
+    "tagCount": {
+      "courses": 1,
+      "journal": 2,
+      "journal/garage": 1,
+      "journal/porte": 1,
+      "maison": 3
+    },
+    "memoCreatedTimestamps": [
+      "2026-10-23T18:03:55Z",
+      "2026-10-23T18:02:11Z",
+      "2026-10-23T18:02:00Z",
+      "2026-10-23T18:02:00Z"
+    ],
+    "memoUpdatedTimestamps": [
+      "2026-10-23T18:03:55Z",
+      "2026-10-23T18:02:11Z",
+      "2026-10-23T18:02:00Z",
+      "2026-10-23T18:02:00Z"
+    ],
+    "pinnedMemos": ["memos/4ZFhWmXzrsAUCR6xrCTgoB"],
+    "totalMemoCount": 4,
+    "attachmentStorageBytes": "0"
+  },
+  "note": "Two empty test memos removed from the recording (and from memos.json)."
+}
