@@ -58,6 +58,7 @@ export const STATUS_TEXT = {
     invalid_answer: 'This address does not answer like Memos: check the address and the port.',
     too_old: 'This Memos is too old for the integration: update it (0.31 or later).',
     setup: 'Memos has no account yet: open it, create the administrator, then a token.',
+    redirect: 'This address redirects elsewhere: enter the final one (https:// if Memos uses it).',
   },
   fr: {
     none: "Saisissez l'adresse de Memos et un jeton d'accès dans la configuration.",
@@ -69,6 +70,8 @@ export const STATUS_TEXT = {
     invalid_answer: "Cette adresse ne répond pas comme Memos : vérifiez l'adresse et le port.",
     too_old: "Ce Memos est trop ancien pour l'intégration : mettez-le à jour (0.31 ou plus).",
     setup: "Memos n'a pas encore de compte : ouvrez-le, créez l'administrateur, puis un jeton.",
+    redirect:
+      "Cette adresse redirige ailleurs : saisissez l'adresse finale (https:// si Memos l'utilise).",
   },
   de: {
     none: 'Gib in der Konfiguration die Adresse von Memos und ein Zugangstoken ein.',
@@ -79,8 +82,10 @@ export const STATUS_TEXT = {
     unreachable: 'Memos antwortet nicht: Prüfe die Adresse und ob es läuft.',
     invalid_answer: 'Diese Adresse antwortet nicht wie Memos: Prüfe Adresse und Port.',
     too_old:
-      'Diese Memos-Version ist zu alt für die Integration: Aktualisiere es (0.31 oder neuer).',
+      'Diese Memos-Version ist zu alt für die Integration: Aktualisiere Memos (0.31 oder neuer).',
     setup: 'Memos hat noch kein Konto: Öffne es, lege den Administrator an, dann ein Token.',
+    redirect:
+      'Diese Adresse leitet weiter: Gib die endgültige ein (https://, wenn Memos es nutzt).',
   },
   es: {
     none: 'Introduzca la dirección de Memos y un token de acceso en la configuración.',
@@ -92,6 +97,7 @@ export const STATUS_TEXT = {
     invalid_answer: 'Esta dirección no responde como Memos: compruebe la dirección y el puerto.',
     too_old: 'Este Memos es demasiado antiguo para la integración: actualícelo (0.31 o posterior).',
     setup: 'Memos aún no tiene cuenta: ábralo, cree el administrador y luego un token.',
+    redirect: 'Esta dirección redirige a otra: introduzca la final (https:// si Memos lo usa).',
   },
 };
 
@@ -122,6 +128,7 @@ export const COMMAND_ERRORS = {
     no_memo: 'No memo with the tag #{tag} in Memos.',
     unreachable: 'Memos does not answer: nothing was done.',
     unauthorized: 'Memos refused the access token: nothing was done.',
+    forbidden: 'Memos refused: this memo belongs to another user.',
     rejected: 'Memos refused: {detail}',
     pin_failed: 'Memo saved, but not pinned: {detail}',
     form: 'Update Gladys to 5.2 or later to use this form.',
@@ -134,6 +141,7 @@ export const COMMAND_ERRORS = {
     no_memo: "Aucun mémo avec l'étiquette #{tag} dans Memos.",
     unreachable: "Memos ne répond pas : rien n'a été fait.",
     unauthorized: "Memos a refusé le jeton d'accès : rien n'a été fait.",
+    forbidden: 'Memos a refusé : ce mémo appartient à un autre utilisateur.',
     rejected: 'Memos a refusé : {detail}',
     pin_failed: 'Mémo enregistré, mais pas épinglé : {detail}',
     form: 'Mettez Gladys à jour (5.2 ou plus) pour utiliser ce formulaire.',
@@ -146,6 +154,7 @@ export const COMMAND_ERRORS = {
     no_memo: 'Keine Notiz mit dem Tag #{tag} in Memos.',
     unreachable: 'Memos antwortet nicht: Es wurde nichts ausgeführt.',
     unauthorized: 'Memos hat das Zugangstoken abgelehnt: Es wurde nichts ausgeführt.',
+    forbidden: 'Memos hat abgelehnt: Diese Notiz gehört einem anderen Benutzer.',
     rejected: 'Memos hat abgelehnt: {detail}',
     pin_failed: 'Notiz gespeichert, aber nicht angepinnt: {detail}',
     form: 'Aktualisiere Gladys auf 5.2 oder neuer, um dieses Formular zu nutzen.',
@@ -158,6 +167,7 @@ export const COMMAND_ERRORS = {
     no_memo: 'No hay ningún memo con la etiqueta #{tag} en Memos.',
     unreachable: 'Memos no responde: no se ha hecho nada.',
     unauthorized: 'Memos rechazó el token de acceso: no se ha hecho nada.',
+    forbidden: 'Memos lo rechazó: este memo pertenece a otro usuario.',
     rejected: 'Memos rechazó la solicitud: {detail}',
     pin_failed: 'Memo guardado, pero no fijado: {detail}',
     form: 'Actualice Gladys a la versión 5.2 o posterior para usar este formulario.',

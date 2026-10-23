@@ -12,7 +12,7 @@
 
 import { createLogger, DEVICE_TRANSPORTS } from '@gladysassistant/integration-sdk';
 import { buildMemosDevice, buildMemosStates, memosIds, parseUsername } from './devices.js';
-import { MemosClient, MemosError, tagFilter } from './memos/client.js';
+import { MemosClient, MemosError, creatorFilter, tagFilter } from './memos/client.js';
 import {
   VISIBILITIES,
   cleanTag,
@@ -118,6 +118,8 @@ export class Hub {
     /** what the triggers already saw: { user, since, memos } */
     this.seen = null;
     this.own = new Set();
+    /** writes that timed out: { content, at } */
+    this.pendingOwn = [];
     this.eventFailing = false;
     this.devicesFailing = false;
     this.publishFailing = false;
@@ -147,6 +149,12 @@ export class Hub {
       Array.isArray(saved.memos);
     // A damaged file is a new baseline, not a crash on every read.
     this.seen = valid ? saved : null;
+    // The memos written here, kept across restarts (loop guard).
+    for (const name of Array.isArray(saved.own) ? saved.own.slice(-MAX_OWN) : []) {
+      if (typeof name === 'string') {
+        this.own.add(name);
+      }
+    }
     await this.reconfigure(config);
   }
 
@@ -280,11 +288,16 @@ export class Hub {
       displayName: user.displayName || '',
     };
     this.counters = summarizeStats(stats);
-    this.latest = memos.map(summarizeMemo);
+    const latest = memos.map(summarizeMemo);
+    this.latest = latest;
     this.widgetLists.clear();
     this.#recover();
     await this.#update();
-    await this.#announce(this.latest);
+    // A new address or token while publishing: this read is stale.
+    if (client !== this.client || this.stopped) {
+      return;
+    }
+    await this.#announce(user.name, latest);
     await this.updateConnectionStatus();
   }
 
@@ -331,25 +344,30 @@ export class Hub {
    * there.
    * @param {object[]} latest the newest memos, summarized
    */
-  async #announce(latest) {
-    const owner = this.user.name;
+  async #announce(owner, latest) {
     const known = this.seen?.user === owner ? this.seen : null;
     let added = [];
     if (known) {
       const seenNames = new Set(known.memos);
       // A memo deleted lets an older one slide into the newest 20: the date
       // keeps it from being announced as new.
-      added = latest
-        .filter((m) => !seenNames.has(m.name) && m.created >= known.since && !this.own.has(m.name))
-        .reverse();
+      added = latest.filter(
+        (m) =>
+          !seenNames.has(m.name) &&
+          m.created >= known.since &&
+          !this.own.has(m.name) &&
+          !this.#isPendingOwn(owner, m),
+      );
     }
     if (added.length > MAX_EVENTS_PER_READ) {
-      logger.info(`${added.length} new memos at once: ${MAX_EVENTS_PER_READ} announced`);
+      logger.info(`${added.length} new memos at once: the ${MAX_EVENTS_PER_READ} newest announced`);
     }
+    // The newest ones, fired in the order they were written.
+    added = added.slice(0, MAX_EVENTS_PER_READ).reverse();
     // A memo Gladys did not take (disconnected, restarting) is not recorded:
     // the next read fires it again.
     const failed = new Set();
-    for (const memo of added.slice(0, MAX_EVENTS_PER_READ)) {
+    for (const memo of added) {
       logger.debug(`${TRIGGERS.created}: ${memo.uid}`);
       const data = this.#eventData(memo);
       if (!(await this.#fire(TRIGGERS.created, data))) {
@@ -365,17 +383,24 @@ export class Hub {
       .map((m) => m.created)
       .filter(Boolean)
       .sort();
-    const newest = [known?.since ?? '', ...latest.map((m) => m.created)].sort().at(-1);
+    // A memo dated in the future must not hide the next ones: `since` never
+    // goes past the time of the read.
+    const now = new Date(this.now()).toISOString().replace(/\.\d{3}Z$/, 'Z');
+    const newest = [known?.since ?? '', ...latest.map((m) => m.created).filter((c) => c <= now)]
+      .sort()
+      .at(-1);
     const next = {
       user: owner,
       // The date from which a memo counts as new: the newest one seen, or the
       // oldest one Gladys refused, so that it is fired again.
       since: dates.length > 0 ? dates[0] : newest,
       memos: latest.map((m) => m.name).filter((name) => !failed.has(name)),
+      own: [],
     };
     for (const name of next.memos) {
       this.own.delete(name);
     }
+    next.own = [...this.own];
     if (JSON.stringify(next) !== JSON.stringify(this.seen)) {
       this.seen = next;
       await this.store.save(next);
@@ -398,10 +423,15 @@ export class Hub {
         logger.warn(`Cannot fire ${trigger}: ${err.message}`);
       }
       this.eventFailing = true;
-      // A refusal for good (4xx but 429) is not retried: it would be refused
-      // at every read.
+      // A refusal for good (400, 404...) is not retried: it would be refused
+      // at every read. 401/403 (Gladys restarting) and 429 are retried.
       const status = err?.status;
-      return Number.isInteger(status) && status >= 400 && status < 500 && status !== 429;
+      return (
+        Number.isInteger(status) &&
+        status >= 400 &&
+        status < 500 &&
+        ![401, 403, 429].includes(status)
+      );
     }
   }
 
@@ -610,6 +640,8 @@ export class Hub {
           invalid: 'invalid_answer',
           not_found: 'invalid_answer',
           rejected: 'invalid_answer',
+          forbidden: 'unauthorized',
+          redirect: 'redirect',
           too_old: 'too_old',
           setup: 'setup',
         }[this.failure] ?? 'unreachable'
@@ -692,16 +724,23 @@ export class Hub {
     }
     const tagNames = parseTags(tags);
     const level = typeof visibility === 'string' ? visibility.trim().toUpperCase() : '';
+    const body = withTags(text, tagNames);
     let memo;
     try {
       memo = await client.createMemo({
-        content: withTags(text, tagNames),
+        content: body,
         visibility: VISIBILITIES.includes(level) ? level : 'PRIVATE',
       });
     } catch (err) {
+      if (err instanceof MemosError && err.kind === 'timeout') {
+        // The memo may exist: it must not be announced either.
+        this.pendingOwn.push({ content: body, at: this.now() });
+        this.pendingOwn = this.pendingOwn.slice(-20);
+      }
       throw this.#commandError(err);
     }
     this.#remember(memo.name);
+    this.widgetLists.clear();
     if (pinned === true || pinned === 'true') {
       try {
         Object.assign(memo, await client.setPinned(memo.name, true));
@@ -739,7 +778,13 @@ export class Hub {
     const pinned = !(unpin === true || unpin === 'true');
     let memo;
     try {
-      const [found] = await client.memos({ pageSize: 1, filter: tagFilter(name) });
+      // Only a memo of the token owner: an administrator token could pin
+      // the memo of another user, a normal one would be refused.
+      const owner = this.user?.name ?? (await client.me()).name;
+      const [found] = await client.memos({
+        pageSize: 1,
+        filter: `${creatorFilter(owner)} && ${tagFilter(name)}`,
+      });
       if (!found) {
         throw new CommandError('no_memo', language, { tag: name });
       }
@@ -753,10 +798,24 @@ export class Hub {
     return { ...summary, link: memoLink(this.config.url, summary) };
   }
 
+  /** A memo of the owner with the content of a write that timed out (one hour). */
+  #isPendingOwn(owner, memo) {
+    this.pendingOwn = this.pendingOwn.filter((p) => this.now() - p.at < 3_600_000);
+    return (
+      memo.author === owner.replace(/^users\//, '') &&
+      this.pendingOwn.some((p) => p.content === memo.content)
+    );
+  }
+
   #remember(name) {
     this.own.add(name);
     if (this.own.size > MAX_OWN) {
       this.own.delete(this.own.values().next().value);
+    }
+    if (this.seen) {
+      // On disk at once: a restart before the next read must not announce it.
+      this.seen = { ...this.seen, own: [...this.own] };
+      this.store.save(this.seen).catch(() => {});
     }
   }
 
@@ -768,6 +827,9 @@ export class Hub {
     const detail = err.message.replace(/^[^:]*: /, '');
     if (kind === 'unauthorized') {
       return new CommandError('unauthorized', this.language);
+    }
+    if (kind === 'forbidden') {
+      return new CommandError('forbidden', this.language);
     }
     if (kind === 'rejected') {
       return new CommandError('rejected', this.language, { detail });

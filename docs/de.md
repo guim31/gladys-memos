@@ -91,7 +91,7 @@ höchstens zehn Notizen gemeldet; der Rest gilt als gesehen.
   **Sichtbarkeit** (privat, wenn nichts gewählt ist) und **Notiz anpinnen**.
   Liefert **Notiz-ID**, **Erste Zeile** und **Link zur Notiz**.
 - **Neueste Notiz eines Tags anpinnen**: pinnt die neueste Notiz mit dem
-  **Tag** an oder löst sie mit **Stattdessen lösen**. Gleiche Ergebnisse.
+  **Tag** an oder pinnt sie mit **Stattdessen abpinnen** ab. Gleiche Ergebnisse.
   Schlägt fehl, wenn keine Notiz den Tag trägt.
 
 ## Szenen-Beispiele
@@ -103,7 +103,7 @@ höchstens zehn Notizen gemeldet; der Rest gilt als gesehen.
   zeigt die Einkaufsnotizen, und **Neue Notiz** fügt eine mit dem Tag hinzu.
 - **Wochenmenü**: jeden Montag um 8 Uhr → **Notiz in Memos schreiben**
   `Wochenmenü`, Tag `menue`, **Notiz anpinnen** angehakt; jeden Sonntagabend →
-  **Neueste Notiz eines Tags anpinnen** `menue` mit **Stattdessen lösen**.
+  **Neueste Notiz eines Tags anpinnen** `menue` mit **Stattdessen abpinnen**.
 - **Nachricht der Familie**: Auslöser **Neue Notiz mit einem Tag** `gladys` →
   `{{triggerEvent.data.author}}: {{triggerEvent.data.content}}` sagen oder
   senden.
@@ -133,6 +133,9 @@ höchstens zehn Notizen gemeldet; der Rest gilt als gesehen.
 
 ## Grenzen
 
+- Das Gerät hängt am Memos-Benutzernamen: Benennst du den Benutzer in Memos
+  um, entsteht ein neues Gerät, und die Auslöser beginnen mit einem stillen
+  Lesen neu.
 - Ein Memos-Server und ein Benutzer: der Besitzer des Tokens. Die Zähler zählen
   die Notizen dieses Benutzers; die Liste, das Widget und die Auslöser zeigen
   auch die Notizen, die andere Benutzer teilen (geschützt oder öffentlich).

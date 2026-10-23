@@ -653,7 +653,7 @@
       "description": {
         "en": "Pins (or unpins) the newest memo carrying the tag, e.g. this week's shopping list.",
         "fr": "Épingle (ou désépingle) le mémo le plus récent qui porte l'étiquette, par exemple la liste de courses de la semaine.",
-        "de": "Pinnt die neueste Notiz mit dem Tag an (oder löst sie), z. B. die Einkaufsliste der Woche.",
+        "de": "Pinnt die neueste Notiz mit dem Tag an (oder pinnt sie ab), z. B. die Einkaufsliste der Woche.",
         "es": "Fija (o desfija) el memo más reciente con la etiqueta, por ejemplo la lista de la compra de la semana."
       },
       "timeout_seconds": 30,
@@ -683,7 +683,7 @@
           "label": {
             "en": "Unpin instead",
             "fr": "Désépingler plutôt",
-            "de": "Stattdessen lösen",
+            "de": "Stattdessen abpinnen",
             "es": "Desfijar en su lugar"
           }
         }

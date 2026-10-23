@@ -118,7 +118,9 @@ test('a burst of memos fires 10 events, the rest is recorded as seen', async (t)
   await world.hub.refresh();
   const created = events(world.fake, 'memo_created');
   assert.equal(created.length, 10);
-  assert.equal(created[0].data.content, 'Import 0', 'in the order they were written');
+  // The 10 newest, in the order they were written.
+  assert.equal(created[0].data.content, 'Import 5');
+  assert.equal(created.at(-1).data.content, 'Import 14');
 });
 
 test('an older memo sliding into the list after a deletion is not announced', async (t) => {
@@ -166,6 +168,55 @@ test('the triggers survive a restart: what was seen is kept in /data', async (t)
   );
 });
 
+test('a memo dated in the future does not hide the next ones', async (t) => {
+  const world = await createWorld();
+  t.after(() => world.app.stop());
+  world.server.addMemo({ content: 'Far away', created: '2030-01-01T00:00:00Z' });
+  await world.hub.refresh();
+  world.server.addMemo({ content: 'Today' });
+  await world.hub.refresh();
+  assert.deepEqual(
+    events(world.fake, 'memo_created').map((e) => e.data.content),
+    ['Far away', 'Today'],
+  );
+});
+
+test('the memos written here stay unannounced after a restart', async (t) => {
+  const store = new MemoryStore();
+  const server = createMemos();
+  const first = await createWorld({ server, store });
+  const original = first.hub.refresh.bind(first.hub);
+  // The read that follows the write never happens before the restart.
+  first.hub.refresh = () => Promise.resolve();
+  const ack = await first.fake.sceneAction('create_memo', { content: 'Own memo' });
+  assert.equal(ack.success, true, ack.error);
+  first.hub.refresh = original;
+  await first.app.stop();
+  const second = await createWorld({ server, store });
+  t.after(() => second.app.stop());
+  assert.equal(second.fake.sceneEvents.length, 0);
+});
+
+test('a write that timed out is not announced when it appears', async (t) => {
+  const server = createMemos();
+  const fetch = server.fetch;
+  let slow = true;
+  server.fetch = async (url, init) => {
+    if (slow && init.method === 'POST') {
+      slow = false;
+      await fetch(url, init); // Memos stores it, the answer is lost
+      throw Object.assign(new Error('timeout'), { name: 'TimeoutError' });
+    }
+    return fetch(url, init);
+  };
+  const world = await createWorld({ server });
+  t.after(() => world.app.stop());
+  const ack = await world.fake.sceneAction('create_memo', { content: 'Slow write' });
+  assert.match(ack.error, /trop tard/);
+  await world.hub.refresh();
+  assert.equal(world.fake.sceneEvents.length, 0);
+});
+
 test('create_memo: tags appended, private by default, pinned on demand', async (t) => {
   const world = await createWorld();
   t.after(() => world.app.stop());
@@ -210,6 +261,15 @@ test('pin_latest pins the newest memo of a tag, unpins on demand', async (t) => 
   ack = await world.fake.sceneAction('pin_latest', { tag: 'courses', unpin: true });
   assert.equal(ack.success, true, ack.error);
   assert.equal(newer.pinned, false);
+  // A newer memo of another user with the tag is left alone.
+  const theirs = world.server.addMemo({
+    content: 'Semaine 3 #courses',
+    creator: 'users/camille',
+    visibility: 'PUBLIC',
+  });
+  ack = await world.fake.sceneAction('pin_latest', { tag: 'courses' });
+  assert.equal(ack.data.outputs.title, 'Semaine 2 #courses');
+  assert.equal(theirs.pinned, false);
   ack = await world.fake.sceneAction('pin_latest', { tag: 'nothing' });
   assert.equal(ack.success, false);
   assert.match(ack.error, /Aucun mémo avec l'étiquette #nothing/);
@@ -333,6 +393,11 @@ test('configuration problems have their own message', async () => {
   const proxy = await createWorld({ server: html });
   assert.match(proxy.fake.connectionStatus.message.fr, /ne répond pas comme Memos/);
   await proxy.app.stop();
+  const moved = createMemos();
+  moved.state.redirect = true;
+  const redirect = await createWorld({ server: moved });
+  assert.match(redirect.fake.connectionStatus.message.fr, /redirige ailleurs/);
+  await redirect.app.stop();
   const old = createMemos();
   old.state.oldServer = true;
   const tooOld = await createWorld({ server: old });

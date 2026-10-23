@@ -135,7 +135,10 @@ test('client: the errors of a real Memos', async () => {
         init.signal.addEventListener('abort', () => reject(init.signal.reason));
       }),
   });
+  // AbortSignal.timeout does not hold the event loop (Node 22 would end the test).
+  const hold = setTimeout(() => {}, 1000);
   await assert.rejects(slow.profile(), { kind: 'timeout' });
+  clearTimeout(hold);
 });
 
 test('client: an old Memos is told apart from a wrong address', async () => {
@@ -148,6 +151,12 @@ test('client: an old Memos is told apart from a wrong address', async () => {
     fetch: async () => new Response(JSON.stringify({ hello: 'world' }), { status: 200 }),
   });
   await assert.rejects(notMemos.profile(), { kind: 'invalid' });
+  const htmlNotFound = new MemosClient({
+    url: HOST,
+    token: TOKEN,
+    fetch: async () => new Response('<html>404</html>', { status: 404 }),
+  });
+  await assert.rejects(htmlNotFound.profile(), { kind: 'invalid' });
 });
 
 test('client: the token travels in the Authorization header only', async () => {

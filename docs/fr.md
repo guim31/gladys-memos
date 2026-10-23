@@ -138,6 +138,9 @@ mémos au plus sont signalés par lecture ; les autres sont comptés comme vus.
 
 ## Limites
 
+- L'appareil est identifié par le nom d'utilisateur Memos : renommer
+  l'utilisateur dans Memos crée un nouvel appareil, et les déclencheurs
+  repartent d'une lecture silencieuse.
 - Un serveur Memos et un utilisateur : le propriétaire du jeton. Les compteurs
   comptent les mémos de cet utilisateur ; la liste, le widget et les
   déclencheurs montrent aussi les mémos que les autres utilisateurs partagent

@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs';
 
 export const HOST = 'http://192.0.2.40:5230';
 export const TOKEN = 'memos_pat_test_token';
-// 2026-10-23, 18:10 UTC: just after the fixtures were recorded.
-export const NOW = Date.parse('2026-10-23T18:10:00.000Z');
+// The morning after the fixtures were recorded.
+export const NOW = Date.parse('2026-10-24T08:00:00.000Z');
 
 export const fixture = (name) =>
   JSON.parse(
@@ -111,6 +111,10 @@ export function createMemos() {
       if (clause === 'pinned') {
         return memo.pinned;
       }
+      const creator = clause.match(/^creator == (".*")$/);
+      if (creator) {
+        return memo.creator === JSON.parse(creator[1]);
+      }
       const tag = clause.match(/^tag in \[(".*")\]$/);
       if (tag) {
         return memo.tags.includes(JSON.parse(tag[1]));
@@ -126,6 +130,12 @@ export function createMemos() {
     state.requests.push(`${method} ${path}${searchParams.size ? `?${searchParams}` : ''}`);
     if (state.down) {
       throw new TypeError('fetch failed', { cause: { code: 'ECONNREFUSED' } });
+    }
+    if (state.redirect) {
+      return new Response(null, {
+        status: 301,
+        headers: { location: url.replace('http://', 'https://') },
+      });
     }
     if (state.html) {
       return answer(200, '<html>Login</html>', 'text/html');

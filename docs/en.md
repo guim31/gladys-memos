@@ -128,6 +128,8 @@ rest is counted as seen.
 
 ## Limits
 
+- The device is keyed by the Memos username: renaming the user in Memos
+  creates a new device, and the triggers start again from a silent read.
 - One Memos server and one user: the owner of the token. The counters count
   that user's memos; the list, the widget and the triggers also show the
   memos other users share (protected or public).

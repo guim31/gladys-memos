@@ -27,7 +27,7 @@ export const DEFAULT_TIMEOUT = 15_000;
 
 export class MemosError extends Error {
   /**
-   * @param {'unreachable' | 'unauthorized' | 'not_found' | 'timeout' | 'http' | 'invalid' | 'rejected' | 'too_old' | 'setup'} kind
+   * @param {'unreachable' | 'unauthorized' | 'forbidden' | 'not_found' | 'timeout' | 'http' | 'invalid' | 'rejected' | 'too_old' | 'setup' | 'redirect'} kind
    * @param {string} message never carries a credential
    * @param {number} [status]
    */
@@ -74,7 +74,9 @@ export class MemosClient {
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(this.timeout),
-        redirect: 'follow',
+        // fetch drops the token on a cross-origin redirect (http -> https):
+        // the user is told the right address instead.
+        redirect: 'manual',
       });
       raw = await response.text();
     } catch (err) {
@@ -83,6 +85,21 @@ export class MemosClient {
       }
       const cause = err?.cause?.code ?? err?.cause?.message ?? err?.message ?? 'error';
       throw new MemosError('unreachable', `Memos unreachable (${cause})`);
+    }
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location') ?? '';
+      let target = '';
+      try {
+        const url = new URL(location, this.apiUrl);
+        target = `${url.protocol}//${url.host}`;
+      } catch {
+        // no usable Location header
+      }
+      throw new MemosError(
+        'redirect',
+        `${path.split('?')[0]}: the address redirects${target ? ` to ${target}` : ''}`,
+        response.status,
+      );
     }
     if (!response.ok) {
       throw MemosClient.#fail(path, response.status, raw);
@@ -103,8 +120,10 @@ export class MemosClient {
 
   static #fail(path, status, raw) {
     let detail = raw.trim() || `HTTP ${status}`;
+    let grpc = false;
     try {
       const data = JSON.parse(raw);
+      grpc = Number.isInteger(data?.code);
       if (typeof data?.message === 'string' && data.message !== '') {
         detail = data.message;
       }
@@ -115,18 +134,23 @@ export class MemosClient {
       detail = `HTTP ${status}`;
     }
     const kind =
-      status === 401 || status === 403
+      status === 401
         ? 'unauthorized'
-        : status === 404
-          ? 'not_found'
-          : status === 400
-            ? 'rejected'
-            : 'http';
-    return new MemosError(
+        : status === 403
+          ? 'forbidden'
+          : status === 404
+            ? 'not_found'
+            : status === 400
+              ? 'rejected'
+              : 'http';
+    const error = new MemosError(
       kind,
       `${path.split('?')[0]}: ${detail.replace(/\s+/g, ' ').slice(0, 120)}`,
       status,
     );
+    // A JSON error of the gRPC gateway: this is Memos (a route it lacks is too old).
+    error.grpc = grpc;
+    return error;
   }
 
   /** `{ version, needsSetup, ... }`, read without the token. */
@@ -135,8 +159,11 @@ export class MemosClient {
     try {
       data = await this.#send('GET', '/instance/profile', { auth: false });
     } catch (err) {
-      if (err instanceof MemosError && err.kind === 'not_found') {
+      if (err instanceof MemosError && err.kind === 'not_found' && err.grpc) {
         throw new MemosError('too_old', 'This Memos is too old: update it', err.status);
+      }
+      if (err instanceof MemosError && err.kind === 'not_found') {
+        throw new MemosError('invalid', 'This address does not answer like Memos', err.status);
       }
       throw err;
     }
@@ -227,3 +254,6 @@ export const celString = (value) => JSON.stringify(String(value));
 
 /** The filter of the memos carrying a tag (or one of its sub-tags). */
 export const tagFilter = (tag) => `tag in [${celString(tag)}]`;
+
+/** The filter of the memos written by a user (`users/<username>`). */
+export const creatorFilter = (userName) => `creator == ${celString(userName)}`;

@@ -138,6 +138,9 @@ diez memos por lectura; el resto se cuenta como visto.
 
 ## Límites
 
+- El dispositivo se identifica por el nombre de usuario de Memos: renombrar
+  el usuario en Memos crea un dispositivo nuevo, y los disparadores vuelven a
+  empezar con una lectura silenciosa.
 - Un servidor Memos y un usuario: el propietario del token. Los contadores
   cuentan los memos de ese usuario; la lista, el widget y los disparadores
   muestran también los memos que comparten otros usuarios (protegidos o
