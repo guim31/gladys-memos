@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-23
+
 ### Added
 
 - A Memos device: memos, pinned memos, tags, memos with open tasks, and the
@@ -24,4 +26,5 @@ the notes of the version's GitHub Release.
   pinned on demand) and "Pin the latest memo of a tag".
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-memos/commits/main
+[Unreleased]: https://github.com/guim31/gladys-memos/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-memos/releases/tag/v1.0.0
