@@ -1,61 +1,140 @@
-# Demo Devices Template
+# Memos
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Connect Gladys to [Memos](https://usememos.com), the self-hosted, open-source
+note-taking app: write memos from your scenes (a house journal, a reminder),
+show the latest ones on the dashboard, and start a scene when a memo with a
+chosen tag is written. Gladys talks directly to your Memos server, on your
+network or on the Internet.
 
-## What you get
+Tested against a real Memos 0.31.0 server (the official Docker image,
+`neosmemo/memos:stable`, October 2026). The Memos API changed a lot between
+versions: older servers are not supported. Feedback welcome on the Gladys
+forum.
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+## Prerequisites
+
+- Gladys Assistant 5.2 or later.
+- A Memos server, 0.31 or later, reachable from the Gladys machine: on port
+  5230 by default, or through a reverse proxy.
+- An access token: in Memos, open **Settings → Access Tokens** and create one
+  (choose **Never** as expiration, or remember to renew it). The integration
+  reads and writes as the user who owns the token.
 
 ## Configuration
 
 1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+2. In **Memos address**, enter the IP address of the server, for example
+   `192.168.1.50`: the integration then uses port 5230. Add a port if yours
+   differs (`192.168.1.50:5231`). Behind a reverse proxy, enter the full
+   address (`https://memos.example.org`).
+3. Paste the **Access token** (it starts with `memos_pat_`).
+4. **Read Memos every**: 1, 5 (default), 15, 30 or 60 minutes. New memos are
+   announced to the scenes at the next read.
+5. **Language of names and messages** sets the feature names (fixed when the
+   device is added) and the texts of the integration. French by default.
+6. Save, then use **Test the connection**: it shows the Memos version, the
+   user and the number of memos.
+7. In the **Discovery** tab, add the **Memos** device.
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+## Device
 
-## Actions
+**Memos** (one device for the server, in the name of the token owner):
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+| Feature               | Value                                                           |
+| --------------------- | --------------------------------------------------------------- |
+| Memos                 | number of your memos (archived ones excepted)                   |
+| Pinned memos          | number of your pinned memos                                     |
+| Tags                  | number of your top-level tags (`#home/garage` counts as `home`) |
+| Memos with open tasks | your memos holding an unchecked task (`- [ ]`)                  |
+| Latest memo           | first line of the newest memo you can read, or "None"           |
 
-## Scenes
+The counters keep their history. The badge of the device shows whether Memos
+answers: **local** for an address of your network, **cloud** for a public
+host, **unreachable** when it does not answer.
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+## Dashboard widget
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+**Memos**: three tiles (memos, pinned, open tasks), the six newest memos and a
+**New memo** button. In the widget settings, **Tag** shows only the memos of a
+tag (and of its sub-tags), and **Pinned memos only** keeps the pinned ones. Tap
+a memo to read it in full; **Open in Memos** appears when Memos is reached over
+https. **New memo** opens a form: type the text (Markdown and `#tags` work as
+in Memos) and the integration writes a private memo. On a widget set on a tag,
+the memo gets that tag: a `shopping` widget becomes a shopping list.
 
-## Dashboard
+## Scene triggers
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+- **New memo**: a memo is written in Memos, by you, or by another user when it
+  is shared with you (protected or public). Filters: **Author** (a Memos
+  username) and **Visibility**.
+- **New memo with a tag**: a new memo carries the tag, or one of its sub-tags
+  (`home` also fires for `#home/garage`). Type the tag without `#`, exactly as
+  in Memos: upper and lower case count. The **Matched tag** variable tells
+  which one.
+
+Variables of both: **Text of the memo**, **First line**, **Tags** (separated by
+commas), **Author (username)**, **Visibility** (`private`, `protected` or
+`public`), **Visibility, in words** and **Link to the memo**.
+
+The first read after the installation is silent: the memos already there are
+not announced. The memos written by this integration are never announced, so a
+scene cannot loop on itself. At most ten memos are announced per read; the
+rest is counted as seen.
+
+## Scene actions
+
+- **Write a memo in Memos**: **Text of the memo** (required, Markdown; insert
+  scene variables with `{{`), and optionally **Tags** (separated by commas,
+  without `#`: they are added at the end of the memo), **Visibility**
+  (private if nothing is chosen) and **Pin the memo**. Returns **Memo id**,
+  **First line** and **Link to the memo**.
+- **Pin the latest memo of a tag**: pins the newest memo carrying the **Tag**,
+  or unpins it with **Unpin instead**. Same results. It fails when no memo
+  carries the tag.
+
+## Scene examples
+
+- **House journal**: the garage door opens after 22:00 → **Write a memo in
+  Memos** with `Garage door opened late`, tags `home, journal`: Memos dates
+  the memo, and the journal is searchable by tag.
+- **Shopping list on the kitchen tablet**: a widget set on the tag
+  `shopping` shows the shopping memos, and **New memo** adds one with the tag.
+- **Menu of the week**: every Monday at 8:00 → **Write a memo in Memos**
+  `Menu of the week`, tag `menu`, **Pin the memo** ticked; every Sunday
+  evening → **Pin the latest memo of a tag** `menu` with **Unpin instead**.
+- **Message from the family**: trigger **New memo with a tag** `gladys` →
+  speak or send `{{triggerEvent.data.author}}: {{triggerEvent.data.content}}`.
+- **Reminder of open tasks**: every evening at 20:00 → continue only if
+  **Memos with open tasks** is above 0 → send a message "You have unfinished
+  tasks in Memos".
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"Memos refused the access token"**: the token was deleted, has expired or
+  is mistyped. Create a new one in Memos → Settings → Access Tokens.
+- **"Memos does not answer"**: check the address and the port from the Gladys
+  machine. The container uses a bridge network: `localhost` is the container
+  itself, enter the IP address of the server instead.
+- **"This address does not answer like Memos"**: a proxy login page answers
+  instead of Memos. Enter the address of Memos itself, or let the proxy
+  through for the Gladys machine.
+- **"This Memos is too old"**: update Memos (0.31 or later).
+- **"Memos has no account yet"**: open Memos once, create the administrator,
+  then the token.
+- A trigger with a tag does not fire: check the case of the tag (`Home` is not
+  `home`) and that the memo is not written by this integration.
+- To see more in the logs of the integration, set `LOG_LEVEL=debug`. The
+  content of the memos is never written to the logs.
+
+## Limits
+
+- The device is keyed by the Memos username: renaming the user in Memos
+  creates a new device, and the triggers start again from a silent read.
+- One Memos server and one user: the owner of the token. The counters count
+  that user's memos; the list, the widget and the triggers also show the
+  memos other users share (protected or public).
+- The triggers fire at the next read (5 minutes by default), not instantly.
+- A memo is written with Markdown text only: no attachments, no location, no
+  comments.
+- The integration never deletes nor archives anything in Memos.
+- Not affiliated with the Memos project.

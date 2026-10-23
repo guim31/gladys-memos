@@ -1,0 +1,31 @@
+{
+  "request": "GET /api/v1/memos?pageSize=20&filter=pinned",
+  "status": 200,
+  "body": {
+    "memos": [
+      {
+        "name": "memos/4ZFhWmXzrsAUCR6xrCTgoB",
+        "state": "NORMAL",
+        "creator": "users/admin",
+        "createTime": "2026-10-23T18:02:00Z",
+        "updateTime": "2026-10-23T18:02:00Z",
+        "content": "Hello #maison and #journal/porte",
+        "visibility": "PRIVATE",
+        "tags": ["maison", "journal", "journal/porte"],
+        "pinned": true,
+        "attachments": [],
+        "relations": [],
+        "reactions": [],
+        "property": {
+          "hasLink": false,
+          "hasTaskList": false,
+          "hasCode": false,
+          "hasIncompleteTasks": false,
+          "title": ""
+        },
+        "snippet": "Hello #maison and #journal/porte"
+      }
+    ],
+    "nextPageToken": ""
+  }
+}

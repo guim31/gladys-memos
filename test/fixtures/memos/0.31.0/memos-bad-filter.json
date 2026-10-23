@@ -1,0 +1,9 @@
+{
+  "request": "GET /api/v1/memos?filter=foo+bar",
+  "status": 400,
+  "body": {
+    "code": 3,
+    "message": "invalid filter: failed to compile filter: ERROR: <input>:1:5: Syntax error: extraneous input 'bar' expecting <EOF>\n | foo bar\n | ....^",
+    "details": []
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "request": "GET /api/v1/memos?pageSize=20",
+  "status": 200,
+  "body": {
+    "memos": [
+      {
+        "name": "memos/KW63fuAyZ3hBq9MGD2VfA4",
+        "state": "NORMAL",
+        "creator": "users/admin",
+        "createTime": "2026-10-23T18:03:55Z",
+        "updateTime": "2026-10-23T18:03:55Z",
+        "content": "Porte du garage restée ouverte 10 min #maison #journal/garage",
+        "visibility": "PRIVATE",
+        "tags": ["maison", "journal", "journal/garage"],
+        "pinned": false,
+        "attachments": [],
+        "relations": [],
+        "reactions": [],
+        "property": {
+          "hasLink": false,
+          "hasTaskList": false,
+          "hasCode": false,
+          "hasIncompleteTasks": false,
+          "title": ""
+        },
+        "snippet": "Porte du garage restée ouverte 10 min #maison #journal/garage"
+      },
+      {
+        "name": "memos/KVbWLwqbo96J8YxwWzQFkg",
+        "state": "NORMAL",
+        "creator": "users/camille",
+        "createTime": "2026-10-23T18:03:53Z",
+        "updateTime": "2026-10-23T18:03:53Z",
+        "content": "Les clés sont sur le buffet #maison",
+        "visibility": "PROTECTED",
+        "tags": ["maison"],
+        "pinned": false,
+        "attachments": [],
+        "relations": [],
+        "reactions": [],
+        "property": {
+          "hasLink": false,
+          "hasTaskList": false,
+          "hasCode": false,
+          "hasIncompleteTasks": false,
+          "title": ""
+        },
+        "snippet": "Les clés sont sur le buffet #maison"
+      },
+      {
+        "name": "memos/aHpui4QosWhUWmHS78bzNJ",
+        "state": "NORMAL",
+        "creator": "users/admin",
+        "createTime": "2026-10-23T18:02:11Z",
+        "updateTime": "2026-10-23T18:02:11Z",
+        "content": "Third #maison",
+        "visibility": "PUBLIC",
+        "tags": ["maison"],
+        "pinned": false,
+        "attachments": [],
+        "relations": [],
+        "reactions": [],
+        "property": {
+          "hasLink": false,
+          "hasTaskList": false,
+          "hasCode": false,
+          "hasIncompleteTasks": false,
+          "title": ""
+        },
+        "snippet": "Third #maison"
+      },
+      {
+        "name": "memos/h7nw8bWkJJwgCdYYhVSo3g",
+        "state": "NORMAL",
+        "creator": "users/admin",
+        "createTime": "2026-10-23T18:02:00Z",
+        "updateTime": "2026-10-23T18:02:00Z",
+        "content": "Second note #courses\n\n- [ ] piles",
+        "visibility": "PRIVATE",
+        "tags": ["courses"],
+        "pinned": false,
+        "attachments": [],
+        "relations": [],
+        "reactions": [],
+        "property": {
+          "hasLink": false,
+          "hasTaskList": true,
+          "hasCode": false,
+          "hasIncompleteTasks": true,
+          "title": ""
+        },
+        "snippet": "Second note #coursespiles"
+      },
+      {
+        "name": "memos/4ZFhWmXzrsAUCR6xrCTgoB",
+        "state": "NORMAL",
+        "creator": "users/admin",
+        "createTime": "2026-10-23T18:02:00Z",
+        "updateTime": "2026-10-23T18:02:00Z",
+        "content": "Hello #maison and #journal/porte",
+        "visibility": "PRIVATE",
+        "tags": ["maison", "journal", "journal/porte"],
+        "pinned": true,
+        "attachments": [],
+        "relations": [],
+        "reactions": [],
+        "property": {
+          "hasLink": false,
+          "hasTaskList": false,
+          "hasCode": false,
+          "hasIncompleteTasks": false,
+          "title": ""
+        },
+        "snippet": "Hello #maison and #journal/porte"
+      }
+    ],
+    "nextPageToken": ""
+  }
+}

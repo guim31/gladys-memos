@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/hub.test.js              # one file
+node --test --test-name-pattern "widget"  # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +31,21 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only (src/app.js does the registration)
+src/app.js                        every SDK handler, registered before connect()
+src/hub.js                        the link to Memos: reads, device, states, badge, events, writes
+src/devices.js                    the Memos device and its states
+src/memos/client.js               the REST API v1 of Memos (the calls the integration needs)
+src/memos/model.js                Memos answers -> plain objects, tag syntax helpers
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/widgets.js                    the dashboard widget (manifest `widgets`)
+src/texts.js                      every text the container produces, in four languages
+src/store.js                      /data/memos-state.json: memos already seen by the triggers
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (mandatory)
+test/                             node --test, against the SDK's fake Gladys and a fake Memos
+test/fixtures/memos/0.31.0/       bodies recorded on a real Memos 0.31.0
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,10 +75,46 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, widget texts, feature names, manifest texts, and `docs/*.md`,
+  kept in sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
+
+## Memos
+
+Facts checked on a real Memos 0.31.0 (`neosmemo/memos:stable`, October 2026;
+the fixtures of `test/fixtures/memos/0.31.0/` come from it):
+
+- The API is the gRPC-gateway mapping of the protobuf services
+  (`proto/api/v1/*.proto` of usememos/memos): errors are JSON
+  `{ code, message, details }` with gRPC codes (401 = `code: 16`).
+- It changed a lot between releases (older ones had `/workspace/profile`,
+  now `/instance/profile`): only 0.31 and later are targeted. An old server is
+  told apart by the 404 of `/instance/profile` or `/auth/me` (status "too
+  old"). User names are `users/<username>` in 0.31.
+- `GET /instance/profile` answers without token; `needsSetup: true` means no
+  account was created yet.
+- Personal access tokens (`memos_pat_...`) are created in Settings → Access
+  Tokens, or by `POST /users/<name>/personalAccessTokens` with a session token.
+- `GET /memos` lists every memo the token may read — the owner's and the
+  PROTECTED / PUBLIC memos of the other users — newest first by `createTime`
+  (one-second precision: ties are common), pinned or not, archived excluded.
+  `filter` is CEL: `tag in ["home"]` (also matches `#home/garage`, Memos
+  expands nested tags), `pinned`, joined with `&&`.
+- `POST /memos` stores an empty content and maps an unknown visibility to
+  PRIVATE without complaint, and **ignores `pinned`**: the hub checks the
+  content and pins with `PATCH /memos/<id>?updateMask=pinned` afterwards.
+- `GET /users/<name>:getStats` carries `totalMemoCount`, `pinnedMemos`,
+  `tagCount` (nested tags counted too) and `memoTypeStats.undoCount` (memos
+  with an open task), plus one timestamp per memo (heavy on a big Memos, but a
+  single request).
+- Memos webhooks exist but need an address the container does not expose:
+  the container reads on a timer instead.
+- A trigger filter matches one value per key (core rule), while a memo has
+  several tags: "New memo with a tag" fires once per tag (10 at most), "New
+  memo" once per memo. The memos written by the integration are never
+  announced (loop guard), the first read is a silent baseline.
 
 ---
 

@@ -1,67 +1,153 @@
-# Template de démonstration
+# Memos
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Connectez Gladys à [Memos](https://usememos.com), l'application libre et
+auto-hébergée de prise de notes : écrivez des mémos depuis vos scènes (journal
+de la maison, rappel), affichez les derniers sur le tableau de bord, et
+lancez une scène quand un mémo portant une étiquette choisie est écrit. Gladys
+parle directement à votre serveur Memos, sur votre réseau ou sur Internet.
 
-## Ce que vous obtenez
+Testée contre un vrai serveur Memos 0.31.0 (l'image Docker officielle,
+`neosmemo/memos:stable`, octobre 2026). L'API de Memos a beaucoup changé d'une
+version à l'autre : les serveurs plus anciens ne sont pas pris en charge. Vos
+retours sont les bienvenus sur le forum de Gladys.
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+## Prérequis
+
+- Gladys Assistant 5.2 ou plus récent.
+- Un serveur Memos 0.31 ou plus récent, joignable depuis la machine Gladys :
+  sur le port 5230 par défaut, ou derrière un proxy inverse.
+- Un jeton d'accès : dans Memos, ouvrez **Paramètres → Jetons d'accès** et
+  créez-en un (choisissez l'expiration **Jamais**, ou pensez à le renouveler).
+  L'intégration lit et écrit au nom de l'utilisateur à qui appartient le jeton.
 
 ## Configuration
 
 1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+2. Dans **Adresse de Memos**, saisissez l'adresse IP du serveur, par exemple
+   `192.168.1.50` : l'intégration utilise alors le port 5230. Ajoutez le port
+   s'il est différent (`192.168.1.50:5231`). Derrière un proxy inverse,
+   saisissez l'adresse complète (`https://memos.example.org`).
+3. Collez le **Jeton d'accès** (il commence par `memos_pat_`).
+4. **Lire Memos toutes les** : 1, 5 (par défaut), 15, 30 ou 60 minutes. Les
+   nouveaux mémos sont signalés aux scènes à la lecture suivante.
+5. **Langue des noms et des messages** fixe le nom des fonctionnalités (figé à
+   l'ajout de l'appareil) et les textes de l'intégration. Français par défaut.
+6. Enregistrez, puis utilisez **Tester la connexion** : elle affiche la version
+   de Memos, l'utilisateur et le nombre de mémos.
+7. Dans l'onglet **Découverte**, ajoutez l'appareil **Memos**.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+## Appareil
 
-## Actions
+**Memos** (un appareil pour le serveur, au nom du propriétaire du jeton) :
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+| Fonctionnalité            | Valeur                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| Mémos                     | nombre de vos mémos (hors archivés)                                                |
+| Mémos épinglés            | nombre de vos mémos épinglés                                                       |
+| Étiquettes                | nombre de vos étiquettes de premier niveau (`#maison/garage` compte pour `maison`) |
+| Mémos avec tâches à faire | vos mémos qui contiennent une tâche non cochée (`- [ ]`)                           |
+| Dernier mémo              | première ligne du mémo le plus récent que vous pouvez lire, ou « Aucun »           |
 
-## Scènes
+Les compteurs gardent leur historique. Le badge de l'appareil indique si Memos
+répond : **local** pour une adresse de votre réseau, **cloud** pour un hôte
+public, **injoignable** quand il ne répond pas.
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+## Widget du tableau de bord
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+**Memos** : trois tuiles (mémos, épinglés, à faire), les six mémos les plus
+récents et un bouton **Nouveau mémo**. Dans les réglages du widget,
+**Étiquette** n'affiche que les mémos d'une étiquette (et de ses
+sous-étiquettes), et **Mémos épinglés seulement** ne garde que les épinglés.
+Touchez un mémo pour le lire en entier ; **Ouvrir dans Memos** apparaît quand
+Memos est joint en https. **Nouveau mémo** ouvre un formulaire : saisissez le
+texte (le Markdown et les `#étiquettes` marchent comme dans Memos) et
+l'intégration écrit un mémo privé. Sur un widget réglé sur une étiquette, le
+mémo reçoit cette étiquette : un widget `courses` devient une liste de courses.
 
-## Tableau de bord
+## Déclencheurs de scène
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+- **Nouveau mémo** : un mémo est écrit dans Memos, par vous, ou par un autre
+  utilisateur quand il est partagé avec vous (protégé ou public). Filtres :
+  **Auteur** (un nom d'utilisateur Memos) et **Visibilité**.
+- **Nouveau mémo avec une étiquette** : un nouveau mémo porte l'étiquette, ou
+  une de ses sous-étiquettes (`maison` vaut aussi pour `#maison/garage`).
+  Saisissez l'étiquette sans `#`, exactement comme dans Memos : les majuscules
+  comptent. La variable **Étiquette trouvée** dit laquelle.
+
+Variables des deux : **Texte du mémo**, **Première ligne**, **Étiquettes**
+(séparées par des virgules), **Auteur (nom d'utilisateur)**, **Visibilité**
+(`private`, `protected` ou `public`), **Visibilité, en toutes lettres** et
+**Lien vers le mémo**.
+
+La première lecture après l'installation est silencieuse : les mémos déjà
+présents ne sont pas signalés. Les mémos écrits par cette intégration ne sont
+jamais signalés : une scène ne peut pas tourner en boucle sur elle-même. Dix
+mémos au plus sont signalés par lecture ; les autres sont comptés comme vus.
+
+## Actions de scène
+
+- **Écrire un mémo dans Memos** : **Texte du mémo** (obligatoire, Markdown ;
+  insérez des variables de scène avec `{{`), et au choix **Étiquettes**
+  (séparées par des virgules, sans `#` : elles sont ajoutées à la fin du
+  mémo), **Visibilité** (privé si rien n'est choisi) et **Épingler le mémo**.
+  Renvoie **Identifiant du mémo**, **Première ligne** et **Lien vers le mémo**.
+- **Épingler le dernier mémo d'une étiquette** : épingle le mémo le plus
+  récent qui porte l'**Étiquette**, ou le désépingle avec **Désépingler
+  plutôt**. Mêmes résultats. Échoue quand aucun mémo ne porte l'étiquette.
+
+## Exemples de scènes
+
+- **Journal de la maison** : la porte du garage s'ouvre après 22 h → **Écrire
+  un mémo dans Memos** avec `Porte du garage ouverte tard`, étiquettes
+  `maison, journal` : Memos date le mémo, et le journal se retrouve par
+  étiquette.
+- **Liste de courses sur la tablette de la cuisine** : un widget réglé sur
+  l'étiquette `courses` affiche les mémos de courses, et **Nouveau mémo** en
+  ajoute un avec l'étiquette.
+- **Menu de la semaine** : chaque lundi à 8 h → **Écrire un mémo dans Memos**
+  `Menu de la semaine`, étiquette `menu`, **Épingler le mémo** coché ; chaque
+  dimanche soir → **Épingler le dernier mémo d'une étiquette** `menu` avec
+  **Désépingler plutôt**.
+- **Message de la famille** : déclencheur **Nouveau mémo avec une étiquette**
+  `gladys` → dire ou envoyer `{{triggerEvent.data.author}} :
+{{triggerEvent.data.content}}`.
+- **Rappel des tâches** : chaque soir à 20 h → continuer seulement si **Mémos
+  avec tâches à faire** est supérieur à 0 → envoyer un message « Il reste des
+  tâches dans Memos ».
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Memos a refusé le jeton d'accès »** : le jeton a été supprimé, a expiré
+  ou est mal recopié. Créez-en un nouveau dans Memos → Paramètres → Jetons
+  d'accès.
+- **« Memos ne répond pas »** : vérifiez l'adresse et le port depuis la machine
+  Gladys. Le conteneur est sur un réseau en pont : `localhost` désigne le
+  conteneur lui-même, saisissez plutôt l'adresse IP du serveur.
+- **« Cette adresse ne répond pas comme Memos »** : une page de connexion d'un
+  proxy répond à la place de Memos. Saisissez l'adresse de Memos lui-même, ou
+  laissez passer la machine Gladys.
+- **« Ce Memos est trop ancien »** : mettez Memos à jour (0.31 ou plus).
+- **« Memos n'a pas encore de compte »** : ouvrez Memos une fois, créez
+  l'administrateur, puis le jeton.
+- Un déclencheur avec étiquette ne part pas : vérifiez les majuscules de
+  l'étiquette (`Maison` n'est pas `maison`) et que le mémo n'est pas écrit par
+  cette intégration.
+- Pour plus de détails dans les journaux de l'intégration, réglez
+  `LOG_LEVEL=debug`. Le contenu des mémos n'est jamais écrit dans les
+  journaux.
+
+## Limites
+
+- L'appareil est identifié par le nom d'utilisateur Memos : renommer
+  l'utilisateur dans Memos crée un nouvel appareil, et les déclencheurs
+  repartent d'une lecture silencieuse.
+- Un serveur Memos et un utilisateur : le propriétaire du jeton. Les compteurs
+  comptent les mémos de cet utilisateur ; la liste, le widget et les
+  déclencheurs montrent aussi les mémos que les autres utilisateurs partagent
+  (protégés ou publics).
+- Les déclencheurs partent à la lecture suivante (5 minutes par défaut), pas
+  instantanément.
+- Un mémo est écrit en texte Markdown seulement : ni pièce jointe, ni lieu, ni
+  commentaire.
+- L'intégration ne supprime ni n'archive jamais rien dans Memos.
+- Sans lien avec le projet Memos.
